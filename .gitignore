@@ -1,0 +1,6 @@
+package-lock.json
+.DS_Store
+elm-stuff
+node_modules
+public
+.*sw*
