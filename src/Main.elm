@@ -82,7 +82,13 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div
+        [ style "margin" "10em auto"
+        , style "padding" "1em"
+        , style "border" "solid 1px darkgrey"
+        , style "border-radius" "4px"
+        , style "width" "848px"
+        ]
         [ div
             [ style "display" "grid"
             , style "grid-template-columns" "repeat(12, 40px)"
