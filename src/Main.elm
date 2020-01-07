@@ -5,28 +5,29 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as D
+import List.Extra exposing (dropWhile, elemIndex, takeWhile)
 
 
 port synth : String -> Cmd msg
 
 
-port triggerAttack : String -> Cmd msg
+port triggerAttack : Float -> Cmd msg
 
 
-port triggerRelease : String -> Cmd msg
+port triggerRelease : Float -> Cmd msg
 
 
 type Msg
-    = TriggerAttack String
-    | TriggerRelease String
+    = TriggerAttack Float
+    | TriggerRelease Float
     | IncrementOctave
     | DecrementOctave
     | ChangeMode String
-    | ChangeTonic String
+    | ChangeKey String
 
 
 type alias Model =
-    { octave : Int, mode : String, tonic : String }
+    { octave : Int, mode : String, key : String }
 
 
 type Status
@@ -40,6 +41,10 @@ type alias Mode =
 
 type alias Note =
     { name : String, meta : String }
+
+
+
+-- names: [Maybe String] frequency: Int
 
 
 type alias Notes =
@@ -61,7 +66,7 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { octave = 4, mode = "ionian", tonic = "C" }, Cmd.none )
+    ( { octave = 4, mode = "ionian", key = "C" }, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -100,8 +105,8 @@ update msg model =
         ChangeMode id ->
             ( { model | mode = id }, Cmd.none )
 
-        ChangeTonic id ->
-            ( { model | tonic = id }, Cmd.none )
+        ChangeKey id ->
+            ( { model | key = id }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -114,7 +119,8 @@ view model =
     div
         [ style "margin" "10em auto"
         , style "padding" "1em"
-        , style "border" "solid 1px darkgrey"
+
+        --        , style "border" "solid 1px darkgrey"
         , style "border-radius" "4px"
         , style "width" "848px"
         ]
@@ -123,13 +129,13 @@ view model =
             , style "grid-template-columns" "repeat(12, 40px)"
             , style "grid-gap" "0.4em 2.2em"
             ]
-            (showKeys model.tonic model.mode model.octave)
+            (showKeys model.key model.mode model.octave)
         , button [ onClick IncrementOctave ] [ text "+" ]
         , button [ onClick DecrementOctave ] [ text "-" ]
         , select [ onInput selectMode ] (createOptions modes modeOption)
         , text (model.mode ++ " mode")
-        , select [ onInput selectTonic ] (createOptions tonics tonicOption)
-        , text (model.tonic ++ " scale")
+        , select [ onInput selectKey ] (createOptions noteMap keyOption)
+        , text (model.key ++ " scale")
         ]
 
 
@@ -137,9 +143,18 @@ view model =
 -- constants
 
 
+noteMap =
+    [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ]
+
+
 notes : Notes
 notes =
     [ Note "C" "B#", Note "C#" "Db", Note "D" "", Note "D#" "Eb", Note "E" "Fb", Note "F" "E#", Note "F#" "Gb", Note "G" "", Note "G#" "Ab", Note "A" "", Note "A#" "Bb", Note "B" "Cb" ]
+
+
+base : Float
+base =
+    16.35
 
 
 majorIntervals =
@@ -148,20 +163,16 @@ majorIntervals =
 
 modes : Modes
 modes =
-    [ Mode "ionian" 0, Mode "dorian" 1, Mode "phrygian" 2, Mode "lydian" 3, Mode "mixolydian" 4, Mode "aeolian" 5, Mode "locrian" 6 ]
+    [ Mode "ionian" 0, Mode "dorian" 2, Mode "phrygian" 4, Mode "lydian" 5, Mode "mixolydian" 6, Mode "aeolian" 8, Mode "locrian" 10 ]
 
 
-tonics =
-    List.map .name notes
+selectKey : String -> Msg
+selectKey id =
+    ChangeKey id
 
 
-selectTonic : String -> Msg
-selectTonic id =
-    ChangeTonic id
-
-
-tonicOption : String -> Html Msg
-tonicOption t =
+keyOption : String -> Html Msg
+keyOption t =
     option [ value t ] [ text t ]
 
 
@@ -204,15 +215,15 @@ modeIntervals m =
         mode =
             getModeByName m
     in
-    rotate (mode.offset * 2) majorIntervals
+    rotate mode.offset majorIntervals
 
 
 
--- notes starting at given tonic
+-- notes starting at given key
 
 
-tonicNotes : String -> Notes -> Notes
-tonicNotes t ns =
+keyNotes : String -> Notes -> Notes
+keyNotes t ns =
     dropWhile (\n -> n.name /= t) ns ++ takeWhile (\n -> n.name /= t) ns
 
 
@@ -222,10 +233,39 @@ rotate n list =
 
 
 showKeys : String -> String -> Int -> List (Html Msg)
-showKeys tonic mode octave =
-    List.map2 activeNotes (modeIntervals mode) (tonicNotes tonic notes)
-        |> List.map (addOctave octave)
+showKeys key mode octave =
+    -- List.map2 activeNotes (modeIntervals mode) (keyNotes key notes)
+    --  |> List.map (addOctave octave)
+    generateFrequencies key octave
         |> List.map createKey
+
+
+generateFrequencies : String -> Int -> List Float
+generateFrequencies key octave =
+    let
+        start =
+            convertKeyToIndex key
+    in
+    List.map (generatePitch octave) (List.range start (start + 11))
+
+
+generatePitch : Int -> Int -> Float
+generatePitch octave =
+    \n -> base * 2 ^ (toFloat octave + toFloat n / 12)
+
+
+convertKeyToIndex : String -> Int
+convertKeyToIndex t =
+    let
+        result =
+            elemIndex t noteMap
+    in
+    case result of
+        Just y ->
+            y
+
+        Nothing ->
+            0
 
 
 activeNotes : Int -> Note -> Note
@@ -243,59 +283,16 @@ addOctave octave =
     \n -> Note (n.name ++ String.fromInt octave) n.meta
 
 
-createKey : Note -> Html Msg
+createKey : Float -> Html Msg
 createKey n =
-    let
-        note =
-            n.name
-
-        color =
-            if n.meta == "inactive" then
-                "grey"
-
-            else
-                "white"
-    in
     div
         [ style "width" "40px"
         , style "height" "40px"
         , style "background-color" "darkgrey"
         , style "text-align" "center"
         , style "padding" "1em"
-        , style "color" color
-        , onMouseDown (TriggerAttack note)
-        , onMouseUp (TriggerRelease note)
+        , style "color" "white"
+        , onMouseDown (TriggerAttack n)
+        , onMouseUp (TriggerRelease n)
         ]
-        [ text note ]
-
-
-{-| Take elements in order as long as the predicate evaluates to `True`
--}
-takeWhile : (a -> Bool) -> List a -> List a
-takeWhile predicate list =
-    case list of
-        [] ->
-            []
-
-        x :: xs ->
-            if predicate x then
-                x :: takeWhile predicate xs
-
-            else
-                []
-
-
-{-| Drop elements in order as long as the predicate evaluates to `True`
--}
-dropWhile : (a -> Bool) -> List a -> List a
-dropWhile predicate list =
-    case list of
-        [] ->
-            []
-
-        x :: xs ->
-            if predicate x then
-                dropWhile predicate xs
-
-            else
-                list
+        [ text (String.fromFloat n) ]
