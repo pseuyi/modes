@@ -43,10 +43,6 @@ type alias Note =
     { name : String, meta : String }
 
 
-
--- names: [Maybe String] frequency: Int
-
-
 type alias Notes =
     List Note
 
@@ -119,8 +115,6 @@ view model =
     div
         [ style "margin" "10em auto"
         , style "padding" "1em"
-
-        --        , style "border" "solid 1px darkgrey"
         , style "border-radius" "4px"
         , style "width" "848px"
         ]
@@ -145,11 +139,6 @@ view model =
 
 noteMap =
     [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ]
-
-
-notes : Notes
-notes =
-    [ Note "C" "B#", Note "C#" "Db", Note "D" "", Note "D#" "Eb", Note "E" "Fb", Note "F" "E#", Note "F#" "Gb", Note "G" "", Note "G#" "Ab", Note "A" "", Note "A#" "Bb", Note "B" "Cb" ]
 
 
 base : Float
@@ -205,28 +194,6 @@ createOptions ls createOption =
     List.map createOption ls
 
 
-
--- the step pattern for a mode
-
-
-modeIntervals : String -> List Int
-modeIntervals m =
-    let
-        mode =
-            getModeByName m
-    in
-    rotate mode.offset majorIntervals
-
-
-
--- notes starting at given key
-
-
-keyNotes : String -> Notes -> Notes
-keyNotes t ns =
-    dropWhile (\n -> n.name /= t) ns ++ takeWhile (\n -> n.name /= t) ns
-
-
 rotate : Int -> List a -> List a
 rotate n list =
     List.drop n list ++ List.take n list
@@ -234,8 +201,6 @@ rotate n list =
 
 showKeys : String -> String -> Int -> List (Html Msg)
 showKeys key mode octave =
-    -- List.map2 activeNotes (modeIntervals mode) (keyNotes key notes)
-    --  |> List.map (addOctave octave)
     generateFrequencies key octave
         |> List.map createKey
 
@@ -266,21 +231,6 @@ convertKeyToIndex t =
 
         Nothing ->
             0
-
-
-activeNotes : Int -> Note -> Note
-activeNotes i n =
-    if i == 1 then
-        n
-
-    else
-        -- TODO get the correct name from meta before reassigning...
-        Note n.name "inactive"
-
-
-addOctave : Int -> Note -> Note
-addOctave octave =
-    \n -> Note (n.name ++ String.fromInt octave) n.meta
 
 
 createKey : Float -> Html Msg
