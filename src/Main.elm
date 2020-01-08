@@ -201,17 +201,47 @@ rotate n list =
 
 showKeys : String -> String -> Int -> List (Html Msg)
 showKeys key mode octave =
-    generateFrequencies key octave
+    generateFrequencies key octave (notesByMode mode)
         |> List.map createKey
 
 
-generateFrequencies : String -> Int -> List Float
-generateFrequencies key octave =
+
+-- the step pattern for a mode
+
+
+notesByMode : String -> List Int
+notesByMode m =
+    let
+        mode =
+            getModeByName m
+
+        modeIntervals =
+            rotate (mode.offset * 2) majorIntervals
+
+        peek =
+            case modeIntervals of
+                x :: xs ->
+                    [ x ]
+
+                [] ->
+                    []
+    in
+    List.append modeIntervals peek
+        |> List.indexedMap Tuple.pair
+        |> List.filter (\t -> Tuple.second t == 1)
+        |> List.map (\t -> Tuple.first t)
+
+
+generateFrequencies : String -> Int -> List Int -> List Float
+generateFrequencies key octave notes =
     let
         start =
             convertKeyToIndex key
+
+        notesInMode =
+            List.map (\n -> n + start) notes
     in
-    List.map (generatePitch octave) (List.range start (start + 11))
+    List.map (generatePitch octave) notesInMode
 
 
 generatePitch : Int -> Int -> Float
