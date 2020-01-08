@@ -51,6 +51,10 @@ type alias Modes =
     List Mode
 
 
+type alias Key =
+    String
+
+
 main =
     Browser.element
         { init = init
@@ -135,8 +139,20 @@ view model =
 
 
 -- constants
+-- TODO: temperament should be a float
 
 
+temperament : Float
+temperament =
+    1
+
+
+tones : Float
+tones =
+    12
+
+
+noteMap : List String
 noteMap =
     [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ]
 
@@ -146,7 +162,17 @@ base =
     16.35
 
 
-majorIntervals =
+halfStep : Float
+halfStep =
+    temperament
+
+
+wholeStep : Float
+wholeStep =
+    halfStep + halfStep
+
+
+major =
     [ 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1 ]
 
 
@@ -216,7 +242,7 @@ notesByMode m =
             getModeByName m
 
         modeIntervals =
-            rotate (mode.offset * 2) majorIntervals
+            rotate (mode.offset * 2) major
 
         peek =
             case modeIntervals of
@@ -235,18 +261,32 @@ notesByMode m =
 generateFrequencies : String -> Int -> List Int -> List Float
 generateFrequencies key octave notes =
     let
-        start =
-            convertKeyToIndex key
-
         notesInMode =
-            List.map (\n -> n + start) notes
+            shiftByKey key notes
     in
     List.map (generatePitch octave) notesInMode
 
 
+
+-- shift the steps in the mode by the key
+
+
+shiftByKey : Key -> List Int -> List Int
+shiftByKey key notes =
+    let
+        keyStep =
+            convertKeyToIndex key
+    in
+    List.map (\n -> n + keyStep) notes
+
+
+
+-- generate pitches based on equal temperament and 12 tones by default
+
+
 generatePitch : Int -> Int -> Float
 generatePitch octave =
-    \n -> base * 2 ^ (toFloat octave + toFloat n / 12)
+    \n -> base * 2 ^ (toFloat octave + toFloat n * temperament / tones)
 
 
 convertKeyToIndex : String -> Int
