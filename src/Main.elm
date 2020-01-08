@@ -162,9 +162,18 @@ base =
     16.35
 
 
+
+-- TODO: each step is equal but this may change
+
+
+step : Float
+step =
+    temperament
+
+
 halfStep : Float
 halfStep =
-    temperament
+    step
 
 
 wholeStep : Float
@@ -232,7 +241,7 @@ showKeys key mode octave =
 
 
 
--- the step pattern for a mode
+-- ea note in a mode is represented by number of steps
 
 
 notesByMode : String -> List Int
@@ -286,7 +295,7 @@ shiftByKey key notes =
 
 generatePitch : Int -> Int -> Float
 generatePitch octave =
-    \n -> base * 2 ^ (toFloat octave + toFloat n * temperament / tones)
+    \steps -> base * 2 ^ (toFloat octave + toFloat steps * temperament / tones)
 
 
 convertKeyToIndex : String -> Int
