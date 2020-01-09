@@ -20,14 +20,14 @@ port triggerRelease : Float -> Cmd msg
 type Msg
     = TriggerAttack Float
     | TriggerRelease Float
-    | IncrementOctave
-    | DecrementOctave
+    | IncrementOctave Int
+    | DecrementOctave Int
     | ChangeMode String
     | ChangeKey String
 
 
 type alias Model =
-    { octave : Int, mode : String, key : String }
+    { scales : List Scale }
 
 
 type Status
@@ -55,6 +55,18 @@ type alias Key =
     String
 
 
+type alias Scale =
+    { id : Int
+    , octave : Octave
+    , mode : String
+    , key : String
+    }
+
+
+type alias Octave =
+    Int
+
+
 main =
     Browser.element
         { init = init
@@ -66,7 +78,11 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { octave = 4, mode = "ionian", key = "C" }, Cmd.none )
+    ( { scales = default }, Cmd.none )
+
+
+default =
+    [ { id = 1, octave = 4, mode = "ionian", key = "C" }, { id = 2, octave = 4, mode = "dorian", key = "D" }, { id = 3, octave = 4, mode = "phrygian", key = "E" }, { id = 4, octave = 4, mode = "lydian", key = "F" } ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -78,35 +94,33 @@ update msg model =
         TriggerRelease note ->
             ( model, triggerRelease note )
 
-        IncrementOctave ->
-            ( { model
-                | octave =
-                    if model.octave < 8 then
-                        model.octave + 1
-
-                    else
-                        model.octave
+        IncrementOctave id ->
+            ( let
+                newScales =
+                    List.map (updateScale id) model.scales
+              in
+              { model
+                | scales = newScales
               }
             , Cmd.none
             )
 
-        DecrementOctave ->
-            ( { model
-                | octave =
-                    if model.octave > 0 then
-                        model.octave - 1
-
-                    else
-                        model.octave
+        DecrementOctave id ->
+            ( let
+                newScales =
+                    List.map (updateScale id) model.scales
+              in
+              { model
+                | scales = newScales
               }
             , Cmd.none
             )
 
         ChangeMode id ->
-            ( { model | mode = id }, Cmd.none )
+            ( model, Cmd.none )
 
         ChangeKey id ->
-            ( { model | key = id }, Cmd.none )
+            ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -122,19 +136,63 @@ view model =
         , style "border-radius" "4px"
         , style "width" "848px"
         ]
+        (showScales model.scales)
+
+
+createKey : Float -> Html Msg
+createKey n =
+    div
+        [ style "width" "40px"
+        , style "height" "40px"
+        , style "background-color" "darkgrey"
+        , style "text-align" "center"
+        , style "padding" "1em"
+        , style "color" "white"
+        , onMouseDown (TriggerAttack n)
+        , onMouseUp (TriggerRelease n)
+        ]
+        [ text (String.fromFloat n) ]
+
+
+showScales : List Scale -> List (Html Msg)
+showScales scales =
+    List.map createScale scales
+
+
+createScale : Scale -> Html Msg
+createScale scale =
+    div []
         [ div
             [ style "display" "grid"
             , style "grid-template-columns" "repeat(12, 40px)"
             , style "grid-gap" "0.4em 2.2em"
             ]
-            (showKeys model.key model.mode model.octave)
-        , button [ onClick IncrementOctave ] [ text "+" ]
-        , button [ onClick DecrementOctave ] [ text "-" ]
+            (showKeys scale.key scale.mode scale.octave)
+        , button [ onClick (IncrementOctave scale.id) ] [ text "+" ]
+        , button [ onClick (DecrementOctave scale.id) ] [ text "-" ]
         , select [ onInput selectMode ] (createOptions modes modeOption)
-        , text (model.mode ++ " mode")
+        , text (scale.mode ++ " mode")
         , select [ onInput selectKey ] (createOptions noteMap keyOption)
-        , text (model.key ++ " scale")
+        , text (scale.key ++ " scale")
         ]
+
+
+updateScale : Int -> Scale -> Scale
+updateScale id scale =
+    if scale.id == id then
+        { scale | octave = incrementOctave scale.octave }
+
+    else
+        scale
+
+
+incrementOctave : Octave -> Octave
+incrementOctave octave =
+    if octave < 8 then
+        octave + 1
+
+    else
+        octave
 
 
 
@@ -310,18 +368,3 @@ convertKeyToIndex t =
 
         Nothing ->
             0
-
-
-createKey : Float -> Html Msg
-createKey n =
-    div
-        [ style "width" "40px"
-        , style "height" "40px"
-        , style "background-color" "darkgrey"
-        , style "text-align" "center"
-        , style "padding" "1em"
-        , style "color" "white"
-        , onMouseDown (TriggerAttack n)
-        , onMouseUp (TriggerRelease n)
-        ]
-        [ text (String.fromFloat n) ]
