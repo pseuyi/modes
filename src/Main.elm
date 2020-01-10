@@ -1,9 +1,11 @@
 port module Main exposing (Msg(..), main, update, view)
 
 import Browser
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
+import Css exposing (px, rem)
+import Html as RootHtml
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (..)
+import Html.Styled.Events exposing (..)
 import Json.Decode as D
 import List.Extra exposing (dropWhile, elemIndex, takeWhile)
 
@@ -128,15 +130,18 @@ subscriptions model =
     Sub.none
 
 
-view : Model -> Html Msg
+view : Model -> RootHtml.Html Msg
 view model =
-    div
-        [ style "margin" "10em auto"
-        , style "padding" "1em"
-        , style "border-radius" "4px"
-        , style "width" "848px"
-        ]
-        (showScales model.scales)
+    toUnstyled <|
+        div
+            [ css
+                [ Css.margin2 (rem 10) Css.auto
+                , Css.padding (rem 1)
+                , Css.borderRadius (px 4)
+                , Css.width (px 848)
+                ]
+            ]
+            (showScales model.scales)
 
 
 
@@ -146,12 +151,14 @@ view model =
 createKey : Float -> Html Msg
 createKey n =
     div
-        [ style "width" "40px"
-        , style "height" "40px"
-        , style "background-color" "darkgrey"
-        , style "text-align" "center"
-        , style "padding" "1em"
-        , style "color" "white"
+        [ css
+            [ Css.width (px 40)
+            , Css.height (px 40)
+            , Css.backgroundColor (Css.hex "A9A9A9")
+            , Css.textAlign Css.center
+            , Css.padding (rem 1)
+            , Css.color (Css.hex "FFF")
+            ]
         , onMouseDown (TriggerAttack n)
         , onMouseUp (TriggerRelease n)
         ]
@@ -167,9 +174,11 @@ createScale : Scale -> Html Msg
 createScale scale =
     div []
         [ div
-            [ style "display" "grid"
-            , style "grid-template-columns" "repeat(12, 40px)"
-            , style "grid-gap" "0.4em 2.2em"
+            [ css
+                [ Css.property "display" "grid"
+                , Css.property "grid-template-columns" "repeat(12, 40px)"
+                , Css.property "grid-gap" "0.4em 2.2em"
+                ]
             ]
             (showKeys scale.key scale.mode scale.octave)
         , button [ onClick (IncrementOctave scale.id) ] [ text "+" ]
