@@ -197,7 +197,6 @@ incrementOctave octave =
 
 
 -- constants
--- TODO: temperament should be a float
 
 
 temperament : Float
