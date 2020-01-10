@@ -139,6 +139,10 @@ view model =
         (showScales model.scales)
 
 
+
+-- ui helpers
+
+
 createKey : Float -> Html Msg
 createKey n =
     div
@@ -175,6 +179,27 @@ createScale scale =
         , select [ onInput selectKey ] (createOptions noteMap keyOption)
         , text (scale.key ++ " scale")
         ]
+
+
+createOptions : List a -> (a -> Html Msg) -> List (Html Msg)
+createOptions ls createOption =
+    List.map createOption ls
+
+
+keyOption : String -> Html Msg
+keyOption t =
+    option [ value t ] [ text t ]
+
+
+modeOption : Mode -> Html Msg
+modeOption m =
+    option [ value m.name ] [ text m.name ]
+
+
+showKeys : String -> String -> Int -> List (Html Msg)
+showKeys key mode octave =
+    generateFrequencies key octave (notesByMode mode)
+        |> List.map createKey
 
 
 updateScale : Int -> Scale -> Scale
@@ -252,11 +277,6 @@ selectKey id =
     ChangeKey id
 
 
-keyOption : String -> Html Msg
-keyOption t =
-    option [ value t ] [ text t ]
-
-
 getModeByName : String -> Mode
 getModeByName name =
     let
@@ -276,25 +296,9 @@ selectMode id =
     ChangeMode id
 
 
-modeOption : Mode -> Html Msg
-modeOption m =
-    option [ value m.name ] [ text m.name ]
-
-
-createOptions : List a -> (a -> Html Msg) -> List (Html Msg)
-createOptions ls createOption =
-    List.map createOption ls
-
-
 rotate : Int -> List a -> List a
 rotate n list =
     List.drop n list ++ List.take n list
-
-
-showKeys : String -> String -> Int -> List (Html Msg)
-showKeys key mode octave =
-    generateFrequencies key octave (notesByMode mode)
-        |> List.map createKey
 
 
 
