@@ -1,6 +1,7 @@
 port module Main exposing (Msg(..), main, update, view)
 
 import Browser
+import Browser.Events exposing (onKeyDown, onKeyUp)
 import Css exposing (px, rem)
 import Html as RootHtml
 import Html.Styled exposing (..)
@@ -26,6 +27,8 @@ type Msg
     | DecrementOctave Int
     | ChangeMode String
     | ChangeKey String
+    | KeyDown Keyboard
+    | KeyUp Keyboard
 
 
 type alias Model =
@@ -55,6 +58,11 @@ type alias Modes =
 
 type alias Key =
     String
+
+
+type Keyboard
+    = Character Char
+    | Control String
 
 
 type alias Scale =
@@ -124,10 +132,19 @@ update msg model =
         ChangeKey id ->
             ( model, Cmd.none )
 
+        KeyDown key ->
+            ( model, triggerAttack 261.6 )
+
+        KeyUp key ->
+            ( model, triggerRelease 261.6 )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Sub.batch
+        [ onKeyDown (D.map KeyDown keyDecoder)
+        , onKeyUp (D.map KeyUp keyDecoder)
+        ]
 
 
 view : Model -> RootHtml.Html Msg
@@ -209,6 +226,25 @@ showKeys : String -> String -> Int -> List (Html Msg)
 showKeys key mode octave =
     generateFrequencies key octave (notesByMode mode)
         |> List.map createKey
+
+
+
+-- input handler
+
+
+keyDecoder : D.Decoder Keyboard
+keyDecoder =
+    D.map toKey (D.field "key" D.string)
+
+
+toKey : String -> Keyboard
+toKey string =
+    case String.uncons string of
+        Just ( char, "" ) ->
+            Character char
+
+        _ ->
+            Control string
 
 
 updateScale : Int -> Scale -> Scale
