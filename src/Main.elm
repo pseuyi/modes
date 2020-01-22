@@ -47,12 +47,16 @@ type alias Notes =
     List Note
 
 
+type alias Interval =
+    List Int
+
+
 type alias Modes =
     List Mode
 
 
-type alias Key =
-    String
+type alias Id =
+    Int
 
 
 type alias Octave =
@@ -63,8 +67,8 @@ type alias ModeName =
     String
 
 
-type alias Id =
-    Int
+type alias Key =
+    String
 
 
 type alias Scale =
@@ -316,6 +320,7 @@ wholeStep =
     halfStep + halfStep
 
 
+major : Interval
 major =
     [ 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1 ]
 
