@@ -26,7 +26,7 @@ type Msg
     | IncrementOctave Id
     | DecrementOctave Id
     | ChangeMode Id ModeName
-    | ChangeKey Key
+    | ChangeKey Id Key
     | KeyDown Keyboard
     | KeyUp Keyboard
 
@@ -133,8 +133,8 @@ update msg model =
         ChangeMode id modeName ->
             ( { model | scales = updateScales id (changeMode modeName) model.scales }, Cmd.none )
 
-        ChangeKey key ->
-            ( model, Cmd.none )
+        ChangeKey id key ->
+            ( { model | scales = updateScales id (changeKey key) model.scales }, Cmd.none )
 
         KeyDown keycode ->
             ( model, triggerAttack 261.6 )
@@ -206,7 +206,7 @@ createScale scale =
         , button [ onClick (DecrementOctave scale.id) ] [ text "-" ]
         , select [ onInput (selectMode scale.id) ] (createOptions modes modeOption)
         , text (scale.mode ++ " mode")
-        , select [ onInput selectKey ] (createOptions noteMap keyOption)
+        , select [ onInput (selectKey scale.id) ] (createOptions noteMap keyOption)
         , text (scale.key ++ " scale")
         ]
 
@@ -300,6 +300,11 @@ changeMode modeName =
     \scale -> { scale | mode = modeName }
 
 
+changeKey : Key -> Scale -> Scale
+changeKey key =
+    \scale -> { scale | key = key }
+
+
 
 -- constants
 
@@ -353,9 +358,9 @@ modes =
     [ Mode "ionian" 0, Mode "dorian" 2, Mode "phrygian" 4, Mode "lydian" 5, Mode "mixolydian" 6, Mode "aeolian" 8, Mode "locrian" 10 ]
 
 
-selectKey : Key -> Msg
-selectKey key =
-    ChangeKey key
+selectKey : Id -> Key -> Msg
+selectKey id =
+    \key -> ChangeKey id key
 
 
 getModeByName : ModeName -> Mode
