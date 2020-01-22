@@ -60,21 +60,25 @@ type alias Key =
     String
 
 
-type Keyboard
-    = Character Char
-    | Control String
+type alias Octave =
+    Int
+
+
+type alias ModeName =
+    String
 
 
 type alias Scale =
     { id : Int
     , octave : Octave
-    , mode : String
+    , mode : ModeName
     , key : String
     }
 
 
-type alias Octave =
-    Int
+type Keyboard
+    = Character Char
+    | Control String
 
 
 main =
@@ -212,7 +216,7 @@ createOptions ls createOption =
     List.map createOption ls
 
 
-keyOption : String -> Html Msg
+keyOption : Key -> Html Msg
 keyOption t =
     option [ value t ] [ text t ]
 
@@ -222,7 +226,7 @@ modeOption m =
     option [ value m.name ] [ text m.name ]
 
 
-showKeys : String -> String -> Int -> List (Html Msg)
+showKeys : Key -> ModeName -> Octave -> List (Html Msg)
 showKeys key mode octave =
     generateFrequencies key octave (notesByMode mode)
         |> List.map createKey
@@ -322,7 +326,7 @@ selectKey id =
     ChangeKey id
 
 
-getModeByName : String -> Mode
+getModeByName : ModeName -> Mode
 getModeByName name =
     let
         match =
@@ -350,7 +354,7 @@ rotate n list =
 -- ea note in a mode is represented by number of steps
 
 
-notesByMode : String -> List Int
+notesByMode : ModeName -> List Int
 notesByMode m =
     let
         mode =
@@ -373,7 +377,7 @@ notesByMode m =
         |> List.map (\t -> Tuple.first t)
 
 
-generateFrequencies : String -> Int -> List Int -> List Float
+generateFrequencies : Key -> Octave -> List Int -> List Float
 generateFrequencies key octave notes =
     let
         notesInMode =
@@ -399,12 +403,12 @@ shiftByKey key notes =
 -- generate pitches based on equal temperament and 12 tones by default
 
 
-generatePitch : Int -> Int -> Float
+generatePitch : Octave -> Int -> Float
 generatePitch octave =
     \steps -> base * 2 ^ (toFloat octave + toFloat steps * temperament / tones)
 
 
-convertKeyToIndex : String -> Int
+convertKeyToIndex : Key -> Int
 convertKeyToIndex t =
     let
         result =
