@@ -35,11 +35,6 @@ type alias Model =
     { scales : List Scale }
 
 
-type Status
-    = Active
-    | Inactive
-
-
 type alias Mode =
     { name : String, offset : Int }
 
@@ -68,12 +63,21 @@ type alias ModeName =
     String
 
 
+type alias Id =
+    Int
+
+
 type alias Scale =
-    { id : Int
+    { id : Id
     , octave : Octave
     , mode : ModeName
-    , key : String
+    , key : Key
     }
+
+
+type Status
+    = Active
+    | Inactive
 
 
 type Keyboard
@@ -130,16 +134,16 @@ update msg model =
             , Cmd.none
             )
 
-        ChangeMode id ->
+        ChangeMode modeName ->
             ( model, Cmd.none )
 
-        ChangeKey id ->
+        ChangeKey key ->
             ( model, Cmd.none )
 
-        KeyDown key ->
+        KeyDown keycode ->
             ( model, triggerAttack 261.6 )
 
-        KeyUp key ->
+        KeyUp keycode ->
             ( model, triggerRelease 261.6 )
 
 
@@ -251,7 +255,7 @@ toKey string =
             Control string
 
 
-updateScale : Int -> Scale -> Scale
+updateScale : Id -> Scale -> Scale
 updateScale id scale =
     if scale.id == id then
         { scale | octave = incrementOctave scale.octave }
@@ -283,7 +287,7 @@ tones =
     12
 
 
-noteMap : List String
+noteMap : List Key
 noteMap =
     [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ]
 
@@ -321,9 +325,9 @@ modes =
     [ Mode "ionian" 0, Mode "dorian" 2, Mode "phrygian" 4, Mode "lydian" 5, Mode "mixolydian" 6, Mode "aeolian" 8, Mode "locrian" 10 ]
 
 
-selectKey : String -> Msg
-selectKey id =
-    ChangeKey id
+selectKey : Key -> Msg
+selectKey key =
+    ChangeKey key
 
 
 getModeByName : ModeName -> Mode
@@ -340,9 +344,9 @@ getModeByName name =
             Mode "ionian" 0
 
 
-selectMode : String -> Msg
-selectMode id =
-    ChangeMode id
+selectMode : ModeName -> Msg
+selectMode modeName =
+    ChangeMode modeName
 
 
 rotate : Int -> List a -> List a
