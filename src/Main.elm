@@ -131,7 +131,7 @@ update msg model =
             )
 
         ChangeMode id modeName ->
-            ( model, Cmd.none )
+            ( { model | scales = updateScales id (changeMode modeName) model.scales }, Cmd.none )
 
         ChangeKey key ->
             ( model, Cmd.none )
@@ -293,6 +293,11 @@ decrementOctave scale =
 
     else
         scale
+
+
+changeMode : ModeName -> Scale -> Scale
+changeMode modeName =
+    \scale -> { scale | mode = modeName }
 
 
 
