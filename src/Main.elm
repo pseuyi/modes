@@ -236,7 +236,11 @@ modeOption m =
 
 showKeys : Key -> ModeName -> Octave -> List (Html Msg)
 showKeys key mode octave =
-    generateFrequencies key octave (notesByMode mode)
+    let
+        interval =
+            notesByMode mode
+    in
+    generateFrequencies key octave interval
         |> List.map createKey
 
 
@@ -363,7 +367,7 @@ rotate n list =
 -- ea note in a mode is represented by number of steps
 
 
-notesByMode : ModeName -> List Int
+notesByMode : ModeName -> Interval
 notesByMode m =
     let
         mode =
@@ -386,7 +390,7 @@ notesByMode m =
         |> List.map (\t -> Tuple.first t)
 
 
-generateFrequencies : Key -> Octave -> List Int -> List Float
+generateFrequencies : Key -> Octave -> Interval -> List Float
 generateFrequencies key octave notes =
     let
         notesInMode =
@@ -399,7 +403,7 @@ generateFrequencies key octave notes =
 -- shift the steps in the mode by the key
 
 
-shiftByKey : Key -> List Int -> List Int
+shiftByKey : Key -> Interval -> Interval
 shiftByKey key notes =
     let
         keyStep =
