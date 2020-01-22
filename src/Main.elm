@@ -117,23 +117,15 @@ update msg model =
             ( model, triggerRelease note )
 
         IncrementOctave id ->
-            ( let
-                newScales =
-                    List.map (updateScale id incrementOctave) model.scales
-              in
-              { model
-                | scales = newScales
+            ( { model
+                | scales = updateScales id incrementOctave model.scales
               }
             , Cmd.none
             )
 
         DecrementOctave id ->
-            ( let
-                newScales =
-                    List.map (updateScale id decrementOctave) model.scales
-              in
-              { model
-                | scales = newScales
+            ( { model
+                | scales = updateScales id decrementOctave model.scales
               }
             , Cmd.none
             )
@@ -261,6 +253,15 @@ toKey string =
 
         _ ->
             Control string
+
+
+
+-- updaters
+
+
+updateScales : Id -> (Scale -> Scale) -> List Scale -> List Scale
+updateScales id updater scales =
+    List.map (updateScale id updater) scales
 
 
 updateScale : Id -> (Scale -> Scale) -> Scale -> Scale
