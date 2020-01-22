@@ -92,7 +92,7 @@ init _ =
 
 
 default =
-    [ { id = 1, octave = 4, mode = "ionian", key = "C" }, { id = 2, octave = 4, mode = "dorian", key = "D" }, { id = 3, octave = 4, mode = "phrygian", key = "E" }, { id = 4, octave = 4, mode = "lydian", key = "F" } ]
+    [ { id = 1, octave = 4, mode = "ionian", key = "C" } ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
