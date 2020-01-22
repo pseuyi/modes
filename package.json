@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "build": "elm make src/Main.elm --output public/main.js",
+    "deploy": "gh-pages -d public",
     "start": "webpack-dev-server --inline --hot",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,6 +19,7 @@
   "devDependencies": {
     "elm-hot-webpack-loader": "^1.1.6",
     "elm-webpack-loader": "^6.0.1",
+    "gh-pages": "^2.1.1",
     "html-webpack-plugin": "^3.2.0",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10"
