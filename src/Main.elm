@@ -25,7 +25,7 @@ type Msg
     | TriggerRelease Float
     | IncrementOctave Id
     | DecrementOctave Id
-    | ChangeMode ModeName
+    | ChangeMode Id ModeName
     | ChangeKey Key
     | KeyDown Keyboard
     | KeyUp Keyboard
@@ -119,7 +119,7 @@ update msg model =
         IncrementOctave id ->
             ( let
                 newScales =
-                    List.map (updateScale id) model.scales
+                    List.map (updateScale id incrementOctave) model.scales
               in
               { model
                 | scales = newScales
@@ -130,7 +130,7 @@ update msg model =
         DecrementOctave id ->
             ( let
                 newScales =
-                    List.map (updateScale id) model.scales
+                    List.map (updateScale id decrementOctave) model.scales
               in
               { model
                 | scales = newScales
@@ -138,7 +138,7 @@ update msg model =
             , Cmd.none
             )
 
-        ChangeMode modeName ->
+        ChangeMode id modeName ->
             ( model, Cmd.none )
 
         ChangeKey key ->
@@ -212,7 +212,7 @@ createScale scale =
             (showKeys scale.key scale.mode scale.octave)
         , button [ onClick (IncrementOctave scale.id) ] [ text "+" ]
         , button [ onClick (DecrementOctave scale.id) ] [ text "-" ]
-        , select [ onInput selectMode ] (createOptions modes modeOption)
+        , select [ onInput (selectMode scale.id) ] (createOptions modes modeOption)
         , text (scale.mode ++ " mode")
         , select [ onInput selectKey ] (createOptions noteMap keyOption)
         , text (scale.key ++ " scale")
@@ -263,22 +263,35 @@ toKey string =
             Control string
 
 
-updateScale : Id -> Scale -> Scale
-updateScale id scale =
+updateScale : Id -> (Scale -> Scale) -> Scale -> Scale
+updateScale id updater scale =
+    let
+        newScale =
+            updater scale
+    in
     if scale.id == id then
-        { scale | octave = incrementOctave scale.octave }
+        newScale
 
     else
         scale
 
 
-incrementOctave : Octave -> Octave
-incrementOctave octave =
-    if octave < 8 then
-        octave + 1
+incrementOctave : Scale -> Scale
+incrementOctave scale =
+    if scale.octave < 8 then
+        { scale | octave = scale.octave + 1 }
 
     else
-        octave
+        scale
+
+
+decrementOctave : Scale -> Scale
+decrementOctave scale =
+    if scale.octave > 0 then
+        { scale | octave = scale.octave - 1 }
+
+    else
+        scale
 
 
 
@@ -353,9 +366,9 @@ getModeByName name =
             Mode "ionian" 0
 
 
-selectMode : ModeName -> Msg
-selectMode modeName =
-    ChangeMode modeName
+selectMode : Id -> ModeName -> Msg
+selectMode id =
+    \modeName -> ChangeMode id modeName
 
 
 rotate : Int -> List a -> List a
