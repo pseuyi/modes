@@ -23,10 +23,10 @@ port triggerRelease : Float -> Cmd msg
 type Msg
     = TriggerAttack Float
     | TriggerRelease Float
-    | IncrementOctave Int
-    | DecrementOctave Int
-    | ChangeMode String
-    | ChangeKey String
+    | IncrementOctave Id
+    | DecrementOctave Id
+    | ChangeMode ModeName
+    | ChangeKey Key
     | KeyDown Keyboard
     | KeyUp Keyboard
 
