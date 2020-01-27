@@ -8,7 +8,7 @@ import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (..)
 import Html.Styled.Events exposing (..)
 import Json.Decode as D
-import List.Extra exposing (dropWhile, elemIndex, takeWhile)
+import List.Extra exposing (dropWhile, elemIndex, last, takeWhile)
 
 
 port synth : String -> Cmd msg
@@ -29,6 +29,8 @@ type Msg
     | ChangeKey Id Key
     | KeyDown Keyboard
     | KeyUp Keyboard
+    | CreateScale
+    | DeleteScale Id
 
 
 type alias Model =
@@ -142,6 +144,12 @@ update msg model =
         KeyUp keycode ->
             ( model, triggerRelease 261.6 )
 
+        CreateScale ->
+            ( { model | scales = model.scales ++ List.map (incrementId model.scales) default }, Cmd.none )
+
+        DeleteScale id ->
+            ( { model | scales = List.filter (except id) model.scales }, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -162,7 +170,17 @@ view model =
                 , Css.width (px 848)
                 ]
             ]
-            (showScales model.scales)
+            [ div
+                []
+                (showScales model.scales)
+            , div
+                [ css
+                    [ Css.property "border" "solid 1px orange"
+                    , Css.margin3 (rem 5) (rem 0) Css.auto
+                    ]
+                ]
+                [ button [ onClick CreateScale ] [ text "new" ] ]
+            ]
 
 
 
@@ -202,12 +220,14 @@ createScale scale =
                 ]
             ]
             (showKeys scale.key scale.mode scale.octave)
+        , text (String.fromInt scale.id)
         , button [ onClick (IncrementOctave scale.id) ] [ text "+" ]
         , button [ onClick (DecrementOctave scale.id) ] [ text "-" ]
         , select [ onInput (selectMode scale.id) ] (createOptions modes modeOption)
         , text (scale.mode ++ " mode")
         , select [ onInput (selectKey scale.id) ] (createOptions noteMap keyOption)
         , text (scale.key ++ " scale")
+        , button [ onClick (DeleteScale scale.id) ] [ text "del" ]
         ]
 
 
@@ -303,6 +323,21 @@ changeMode modeName =
 changeKey : Key -> Scale -> Scale
 changeKey key =
     \scale -> { scale | key = key }
+
+
+incrementId : List Scale -> Scale -> Scale
+incrementId scales =
+    case last scales of
+        Nothing ->
+            \scale -> scale
+
+        Just last ->
+            \scale -> { scale | id = last.id + 1 }
+
+
+except : Id -> Scale -> Bool
+except id =
+    \scale -> scale.id /= id || scale.id == 1
 
 
 
