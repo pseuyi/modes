@@ -220,6 +220,7 @@ createScale scale =
                 ]
             ]
             (showKeys scale.key scale.mode scale.octave)
+        , text (String.fromInt scale.id)
         , button [ onClick (IncrementOctave scale.id) ] [ text "+" ]
         , button [ onClick (DecrementOctave scale.id) ] [ text "-" ]
         , select [ onInput (selectMode scale.id) ] (createOptions modes modeOption)
@@ -227,7 +228,6 @@ createScale scale =
         , select [ onInput (selectKey scale.id) ] (createOptions noteMap keyOption)
         , text (scale.key ++ " scale")
         , button [ onClick (DeleteScale scale.id) ] [ text "del" ]
-        , text (String.fromInt scale.id)
         ]
 
 
