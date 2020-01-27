@@ -337,7 +337,7 @@ incrementId scales =
 
 except : Id -> Scale -> Bool
 except id =
-    \scale -> scale.id /= id
+    \scale -> scale.id /= id || scale.id == 1
 
 
 
