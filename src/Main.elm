@@ -148,7 +148,7 @@ update msg model =
             ( { model | scales = model.scales ++ List.map (incrementId model.scales) default }, Cmd.none )
 
         DeleteScale id ->
-            ( { model | scales = List.filter (\s -> s.id /= id) model.scales }, Cmd.none )
+            ( { model | scales = List.filter (except id) model.scales }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -333,6 +333,11 @@ incrementId scales =
 
         Just last ->
             \scale -> { scale | id = last.id + 1 }
+
+
+except : Id -> Scale -> Bool
+except id =
+    \scale -> scale.id /= id
 
 
 
