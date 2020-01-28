@@ -467,7 +467,8 @@ generateFrequencies key octave notes tones =
                 shiftByKey key notes
 
             else
-                List.repeat (round tones) 1
+                -- steps for a multitonal 'mode'
+                List.range 0 (round tones)
     in
     List.map (generatePitch octave tones) notesInMode
 
