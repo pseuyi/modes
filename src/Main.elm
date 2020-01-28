@@ -27,8 +27,7 @@ type Msg
     | DecrementOctave Id
     | ChangeMode Id ModeName
     | ChangeKey Id Key
-    | IncrementTone Id
-    | DecrementTone Id
+    | ChangeTones Id Tones
     | KeyDown Keyboard
     | KeyUp Keyboard
     | CreateScale
@@ -145,11 +144,8 @@ update msg model =
         ChangeKey id key ->
             ( { model | scales = updateScales id (changeKey key) model.scales }, Cmd.none )
 
-        IncrementTone id ->
-            ( { model | scales = updateScales id (\scale -> { scale | tones = 19 }) model.scales }, Cmd.none )
-
-        DecrementTone id ->
-            ( model, Cmd.none )
+        ChangeTones id tones ->
+            ( { model | scales = updateScales id (\scale -> { scale | tones = tones }) model.scales }, Cmd.none )
 
         KeyDown keycode ->
             ( model, triggerAttack 261.6 )
@@ -241,7 +237,7 @@ createScale scale =
         , text (scale.mode ++ " mode")
         , select [ onInput (selectKey scale.id) ] (createOptions noteMap keyOption)
         , text (scale.key ++ " scale")
-        , button [ onClick (IncrementTone scale.id) ] [ text "19-tone" ]
+        , input [ onInput (changeTones scale.id), placeholder "# of tones" ] []
         , button [ onClick (DeleteScale scale.id) ] [ text "del" ]
         ]
 
@@ -403,9 +399,25 @@ modes =
     [ Mode "ionian" 0, Mode "dorian" 2, Mode "phrygian" 4, Mode "lydian" 5, Mode "mixolydian" 6, Mode "aeolian" 8, Mode "locrian" 10 ]
 
 
+
+-- input handlers
+
+
 selectKey : Id -> Key -> Msg
 selectKey id =
     \key -> ChangeKey id key
+
+
+selectMode : Id -> ModeName -> Msg
+selectMode id =
+    \modeName -> ChangeMode id modeName
+
+
+changeTones : Id -> String -> Msg
+changeTones id =
+    \tones ->
+        ChangeTones id
+            (Maybe.withDefault 12 (String.toFloat tones))
 
 
 getModeByName : ModeName -> Mode
@@ -420,11 +432,6 @@ getModeByName name =
 
         [] ->
             Mode "ionian" 0
-
-
-selectMode : Id -> ModeName -> Msg
-selectMode id =
-    \modeName -> ChangeMode id modeName
 
 
 rotate : Int -> List a -> List a
