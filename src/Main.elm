@@ -215,7 +215,7 @@ createKey n =
         , onMouseDown (TriggerAttack n)
         , onMouseUp (TriggerRelease n)
         ]
-        [ text (String.fromFloat n) ]
+        [ text (String.fromInt (round n)) ]
 
 
 showScales : List Scale -> List (Html Msg)
