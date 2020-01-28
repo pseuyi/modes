@@ -204,13 +204,12 @@ createKey : Float -> Html Msg
 createKey n =
     li
         [ css
-            [ Css.width (px 40)
-            , Css.height (px 40)
-            , Css.backgroundColor (Css.hex "A9A9A9")
+            [ Css.backgroundColor (Css.hex "A9A9A9")
             , Css.textAlign Css.center
-            , Css.padding (rem 1)
+            , Css.padding (rem 0.5)
             , Css.color (Css.hex "FFF")
             , Css.margin (px 2)
+            , Css.property "flex-grow" "1"
             ]
         , onMouseDown (TriggerAttack n)
         , onMouseUp (TriggerRelease n)
