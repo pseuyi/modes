@@ -27,6 +27,8 @@ type Msg
     | DecrementOctave Id
     | ChangeMode Id ModeName
     | ChangeKey Id Key
+    | IncrementTone Id
+    | DecrementTone Id
     | KeyDown Keyboard
     | KeyUp Keyboard
     | CreateScale
@@ -143,6 +145,12 @@ update msg model =
         ChangeKey id key ->
             ( { model | scales = updateScales id (changeKey key) model.scales }, Cmd.none )
 
+        IncrementTone id ->
+            ( { model | scales = updateScales id (\scale -> { scale | tones = 19 }) model.scales }, Cmd.none )
+
+        DecrementTone id ->
+            ( model, Cmd.none )
+
         KeyDown keycode ->
             ( model, triggerAttack 261.6 )
 
@@ -232,6 +240,7 @@ createScale scale =
         , text (scale.mode ++ " mode")
         , select [ onInput (selectKey scale.id) ] (createOptions noteMap keyOption)
         , text (scale.key ++ " scale")
+        , button [ onClick (IncrementTone scale.id) ] [ text "19-tone" ]
         , button [ onClick (DeleteScale scale.id) ] [ text "del" ]
         ]
 
@@ -453,7 +462,11 @@ generateFrequencies : Key -> Octave -> Interval -> Tones -> List Float
 generateFrequencies key octave notes tones =
     let
         notesInMode =
-            shiftByKey key notes
+            if tones == 12 then
+                shiftByKey key notes
+
+            else
+                List.repeat (round tones) 1
     in
     List.map (generatePitch octave tones) notesInMode
 
