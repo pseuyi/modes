@@ -2,7 +2,7 @@ port module Main exposing (Msg(..), main, update, view)
 
 import Browser
 import Browser.Events exposing (onKeyDown, onKeyUp)
-import Css exposing (px, rem)
+import Css exposing (pct, px, rem)
 import Html as RootHtml
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (..)
@@ -180,16 +180,16 @@ view model =
                 [ Css.margin2 (rem 10) Css.auto
                 , Css.padding (rem 1)
                 , Css.borderRadius (px 4)
-                , Css.width (px 848)
+                , Css.width (pct 90)
+                , Css.textAlign Css.center
                 ]
             ]
-            [ div
-                []
+            [ ul
+                [ css [ Css.padding (px 0), Css.listStyle Css.none ] ]
                 (showScales model.scales)
             , div
                 [ css
-                    [ Css.property "border" "solid 1px orange"
-                    , Css.margin3 (rem 5) (rem 0) Css.auto
+                    [ Css.margin3 (rem 5) (rem 0) Css.auto
                     ]
                 ]
                 [ button [ onClick CreateScale ] [ text "new" ] ]
@@ -224,11 +224,11 @@ showScales scales =
 
 createScale : Scale -> Html Msg
 createScale scale =
-    div []
+    li []
         [ div
             [ css
                 [ Css.property "display" "grid"
-                , Css.property "grid-template-columns" "repeat(12, 40px)"
+                , Css.property "grid-template-columns" "repeat(auto-fit, 40px)"
                 , Css.property "grid-gap" "0.4em 2.2em"
                 ]
             ]
