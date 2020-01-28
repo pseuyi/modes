@@ -202,7 +202,7 @@ view model =
 
 createKey : Float -> Html Msg
 createKey n =
-    div
+    li
         [ css
             [ Css.width (px 40)
             , Css.height (px 40)
@@ -210,6 +210,7 @@ createKey n =
             , Css.textAlign Css.center
             , Css.padding (rem 1)
             , Css.color (Css.hex "FFF")
+            , Css.margin (px 2)
             ]
         , onMouseDown (TriggerAttack n)
         , onMouseUp (TriggerRelease n)
@@ -224,12 +225,13 @@ showScales scales =
 
 createScale : Scale -> Html Msg
 createScale scale =
-    li []
-        [ div
+    li [ css [ Css.property "display" "block" ] ]
+        [ ul
             [ css
-                [ Css.property "display" "grid"
-                , Css.property "grid-template-columns" "repeat(auto-fit, 40px)"
-                , Css.property "grid-gap" "0.4em 2.2em"
+                [ Css.property "display" "flex"
+                , Css.padding (px 0)
+                , Css.listStyle Css.none
+                , Css.property "justify-content" "center"
                 ]
             ]
             (showKeys scale.key scale.mode scale.octave scale.tones)
