@@ -73,11 +73,16 @@ type alias Key =
     String
 
 
+type alias Tones =
+    Float
+
+
 type alias Scale =
     { id : Id
     , octave : Octave
     , mode : ModeName
     , key : Key
+    , tones : Tones
     }
 
 
@@ -106,7 +111,7 @@ init _ =
 
 
 default =
-    [ { id = 1, octave = 4, mode = "ionian", key = "C" } ]
+    [ { id = 1, octave = 4, mode = "ionian", key = "C", tones = 12 } ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -219,7 +224,7 @@ createScale scale =
                 , Css.property "grid-gap" "0.4em 2.2em"
                 ]
             ]
-            (showKeys scale.key scale.mode scale.octave)
+            (showKeys scale.key scale.mode scale.octave scale.tones)
         , text (String.fromInt scale.id)
         , button [ onClick (IncrementOctave scale.id) ] [ text "+" ]
         , button [ onClick (DecrementOctave scale.id) ] [ text "-" ]
@@ -243,16 +248,16 @@ keyOption t =
 
 modeOption : Mode -> Html Msg
 modeOption m =
-    option [ value m.name ] [ text m.name ]
+    option [ selected ("ionian" == m.name), value m.name ] [ text m.name ]
 
 
-showKeys : Key -> ModeName -> Octave -> List (Html Msg)
-showKeys key mode octave =
+showKeys : Key -> ModeName -> Octave -> Tones -> List (Html Msg)
+showKeys key mode octave tones =
     let
         interval =
             notesByMode mode
     in
-    generateFrequencies key octave interval
+    generateFrequencies key octave interval tones
         |> List.map createKey
 
 
@@ -347,11 +352,6 @@ except id =
 temperament : Float
 temperament =
     1
-
-
-tones : Float
-tones =
-    12
 
 
 noteMap : List Key
@@ -449,13 +449,13 @@ notesByMode m =
         |> List.map (\t -> Tuple.first t)
 
 
-generateFrequencies : Key -> Octave -> Interval -> List Float
-generateFrequencies key octave notes =
+generateFrequencies : Key -> Octave -> Interval -> Tones -> List Float
+generateFrequencies key octave notes tones =
     let
         notesInMode =
             shiftByKey key notes
     in
-    List.map (generatePitch octave) notesInMode
+    List.map (generatePitch octave tones) notesInMode
 
 
 
@@ -475,8 +475,8 @@ shiftByKey key notes =
 -- generate pitches based on equal temperament and 12 tones by default
 
 
-generatePitch : Octave -> Int -> Float
-generatePitch octave =
+generatePitch : Octave -> Tones -> Int -> Float
+generatePitch octave tones =
     \steps -> base * 2 ^ (toFloat octave + toFloat steps * temperament / tones)
 
 
