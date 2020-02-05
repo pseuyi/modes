@@ -8,10 +8,13 @@ import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (..)
 import Html.Styled.Events exposing (..)
 import Json.Decode as D
+import Json.Encode as E
 import List.Extra exposing (dropWhile, elemIndex, last, takeWhile)
+import Svg exposing (circle, rect)
+import Svg.Attributes exposing (height, viewBox, width)
 
 
-port synth : String -> Cmd msg
+port analyze : (E.Value -> msg) -> Sub msg
 
 
 port triggerAttack : Float -> Cmd msg
@@ -180,7 +183,9 @@ view model =
                 , Css.textAlign Css.center
                 ]
             ]
-            [ ul
+            [ div []
+                [ roundRect ]
+            , ul
                 [ css [ Css.padding (px 0), Css.listStyle Css.none ] ]
                 (showScales model.scales)
             , div
@@ -194,6 +199,14 @@ view model =
 
 
 -- ui helpers
+
+
+roundRect : Html msg
+roundRect =
+    Html.Styled.fromUnstyled <|
+        Svg.svg
+            [ Svg.Attributes.width "640", Svg.Attributes.height "200", viewBox "0 0 640 120" ]
+            [ rect [ Svg.Attributes.width "640", Svg.Attributes.height "100" ] [] ]
 
 
 createKey : Float -> Html Msg
