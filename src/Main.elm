@@ -18,6 +18,12 @@ import List.Extra exposing (dropWhile, elemIndex, last, takeWhile)
 port connectMIDI : (String -> msg) -> Sub msg
 
 
+port receiveMIDINoteOn : (Float -> msg) -> Sub msg
+
+
+port receiveMIDINoteOff : (Float -> msg) -> Sub msg
+
+
 port triggerAttack : Float -> Cmd msg
 
 
@@ -37,6 +43,8 @@ type Msg
     | CreateScale
     | DeleteScale Id
     | ConnectDevice String
+    | ReceiveMIDINoteOn Float
+    | ReceiveMIDINoteOff Float
 
 
 type alias Model =
@@ -167,6 +175,12 @@ update msg model =
         ConnectDevice name ->
             ( { model | connectedDevice = name }, Cmd.none )
 
+        ReceiveMIDINoteOn note ->
+            ( model, triggerAttack note )
+
+        ReceiveMIDINoteOff note ->
+            ( model, triggerRelease note )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -174,6 +188,8 @@ subscriptions model =
         [ onKeyDown (D.map KeyDown keyDecoder)
         , onKeyUp (D.map KeyUp keyDecoder)
         , connectMIDI (\n -> ConnectDevice n)
+        , receiveMIDINoteOn (\n -> ReceiveMIDINoteOn n)
+        , receiveMIDINoteOff (\n -> ReceiveMIDINoteOff n)
         ]
 
 
