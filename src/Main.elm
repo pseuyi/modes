@@ -14,7 +14,7 @@ import Svg exposing (circle, rect)
 import Svg.Attributes exposing (height, viewBox, width)
 
 
-port analyze : (E.Value -> msg) -> Sub msg
+port analyze : (D.Value -> msg) -> Sub msg
 
 
 port triggerAttack : Float -> Cmd msg
@@ -35,10 +35,11 @@ type Msg
     | KeyUp Keyboard
     | CreateScale
     | DeleteScale Id
+    | Changed D.Value
 
 
 type alias Model =
-    { scales : List Scale }
+    { scales : List Scale, value : List Float }
 
 
 type alias Mode =
@@ -111,7 +112,7 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { scales = default }, Cmd.none )
+    ( { scales = default, value = [] }, Cmd.none )
 
 
 default =
@@ -162,12 +163,16 @@ update msg model =
         DeleteScale id ->
             ( { model | scales = List.filter (except id) model.scales }, Cmd.none )
 
+        Changed value ->
+            ( { model | value = value }, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ onKeyDown (D.map KeyDown keyDecoder)
         , onKeyUp (D.map KeyUp keyDecoder)
+        , analyze Changed
         ]
 
 
