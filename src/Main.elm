@@ -11,7 +11,11 @@ import Json.Decode as D
 import List.Extra exposing (dropWhile, elemIndex, last, takeWhile)
 
 
-port synth : String -> Cmd msg
+
+-- port synth : String -> Cmd msg
+
+
+port connectMIDI : (String -> msg) -> Sub msg
 
 
 port triggerAttack : Float -> Cmd msg
@@ -32,10 +36,11 @@ type Msg
     | KeyUp Keyboard
     | CreateScale
     | DeleteScale Id
+    | ConnectDevice String
 
 
 type alias Model =
-    { scales : List Scale }
+    { scales : List Scale, connectedDevice : String }
 
 
 type alias Mode =
@@ -108,7 +113,7 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { scales = default }, Cmd.none )
+    ( { scales = default, connectedDevice = "" }, Cmd.none )
 
 
 default =
@@ -159,12 +164,16 @@ update msg model =
         DeleteScale id ->
             ( { model | scales = List.filter (except id) model.scales }, Cmd.none )
 
+        ConnectDevice name ->
+            ( { model | connectedDevice = name }, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ onKeyDown (D.map KeyDown keyDecoder)
         , onKeyUp (D.map KeyUp keyDecoder)
+        , connectMIDI (\n -> ConnectDevice n)
         ]
 
 
@@ -180,7 +189,16 @@ view model =
                 , Css.textAlign Css.center
                 ]
             ]
-            [ ul
+            [ div []
+                [ text
+                    (if model.connectedDevice /= "" then
+                        "currently connect to: " ++ model.connectedDevice
+
+                     else
+                        ""
+                    )
+                ]
+            , ul
                 [ css [ Css.padding (px 0), Css.listStyle Css.none ] ]
                 (showScales model.scales)
             , div
