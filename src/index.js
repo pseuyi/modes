@@ -61,10 +61,12 @@ function MIDIMessageEventHandler(e) {
     // synth.triggerAttackRelease(note, '4n');
 
     // send note number to elm
+    app.ports.receiveMIDINoteOn.send(note);
   } else if (command === 128 || velocity === 0) {
     // note off
 
     console.log('note off');
     //send note number to elm
+    app.ports.receiveMIDINoteOff.send(note);
   }
 }
