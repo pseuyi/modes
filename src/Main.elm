@@ -2,13 +2,15 @@ port module Main exposing (Msg(..), main, update, view)
 
 import Browser
 import Browser.Events exposing (onKeyDown, onKeyUp)
+import Char exposing (isDigit)
 import Css exposing (pct, px, rem)
 import Html as RootHtml
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (..)
 import Html.Styled.Events exposing (..)
 import Json.Decode as D
-import List.Extra exposing (dropWhile, elemIndex, last, takeWhile)
+import List.Extra exposing (dropWhile, elemIndex, getAt, last, takeWhile)
+import String exposing (all, cons, fromChar, fromInt, toInt)
 
 
 
@@ -161,7 +163,7 @@ update msg model =
             ( { model | scales = updateScales id (\scale -> { scale | tones = tones }) model.scales }, Cmd.none )
 
         KeyDown keycode ->
-            ( model, triggerAttack 261.6 )
+            ( model, triggerNote model keycode )
 
         KeyUp keycode ->
             ( model, triggerRelease 261.6 )
@@ -230,6 +232,54 @@ view model =
 -- ui helpers
 
 
+getDefaultScale : List Scale -> Scale
+getDefaultScale scales =
+    case scales of
+        x :: _ ->
+            x
+
+        [] ->
+            getDefaultScale default
+
+
+keyboardToString : Keyboard -> String
+keyboardToString k =
+    case k of
+        Character a ->
+            fromChar a
+
+        Control a ->
+            a
+
+
+triggerNote : Model -> Keyboard -> Cmd Msg
+triggerNote model rawInput =
+    let
+        keyStr =
+            keyboardToString rawInput
+
+        input =
+            Maybe.withDefault 0 (toInt <| keyStr)
+
+        s =
+            getDefaultScale model.scales
+
+        interval =
+            notesByMode s.mode
+
+        frequencies =
+            generateFrequencies s.key s.octave interval s.tones
+
+        numberKeyPressed =
+            all isDigit <| keyStr
+    in
+    if numberKeyPressed then
+        triggerAttack <| Maybe.withDefault 261.6 <| getAt (input - 1) frequencies
+
+    else
+        triggerAttack 261.6
+
+
 createKey : Float -> Html Msg
 createKey n =
     li
@@ -244,7 +294,7 @@ createKey n =
         , onMouseDown (TriggerAttack n)
         , onMouseUp (TriggerRelease n)
         ]
-        [ text (String.fromInt (round n)) ]
+        [ text (fromInt (round n)) ]
 
 
 showScales : List Scale -> List (Html Msg)
