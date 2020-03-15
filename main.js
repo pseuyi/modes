@@ -5689,6 +5689,370 @@ var $author$project$Main$incrementOctave = function (scale) {
 };
 var $elm$json$Json$Encode$float = _Json_wrap;
 var $author$project$Main$triggerAttack = _Platform_outgoingPort('triggerAttack', $elm$json$Json$Encode$float);
+var $author$project$Main$base = 16.35;
+var $elm$core$Basics$pow = _Basics_pow;
+var $author$project$Main$temperament = 1;
+var $author$project$Main$generatePitch = F2(
+	function (octave, tones) {
+		return function (steps) {
+			return $author$project$Main$base * A2($elm$core$Basics$pow, 2, octave + ((steps * $author$project$Main$temperament) / tones));
+		};
+	});
+var $elm$core$Basics$round = _Basics_round;
+var $elm_community$list_extra$List$Extra$findIndexHelp = F3(
+	function (index, predicate, list) {
+		findIndexHelp:
+		while (true) {
+			if (!list.b) {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (predicate(x)) {
+					return $elm$core$Maybe$Just(index);
+				} else {
+					var $temp$index = index + 1,
+						$temp$predicate = predicate,
+						$temp$list = xs;
+					index = $temp$index;
+					predicate = $temp$predicate;
+					list = $temp$list;
+					continue findIndexHelp;
+				}
+			}
+		}
+	});
+var $elm_community$list_extra$List$Extra$findIndex = $elm_community$list_extra$List$Extra$findIndexHelp(0);
+var $elm_community$list_extra$List$Extra$elemIndex = function (x) {
+	return $elm_community$list_extra$List$Extra$findIndex(
+		$elm$core$Basics$eq(x));
+};
+var $author$project$Main$noteMap = _List_fromArray(
+	['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']);
+var $author$project$Main$convertKeyToIndex = function (t) {
+	var result = A2($elm_community$list_extra$List$Extra$elemIndex, t, $author$project$Main$noteMap);
+	if (result.$ === 'Just') {
+		var y = result.a;
+		return y;
+	} else {
+		return 0;
+	}
+};
+var $author$project$Main$shiftByKey = F2(
+	function (key, notes) {
+		var keyStep = $author$project$Main$convertKeyToIndex(key);
+		return A2(
+			$elm$core$List$map,
+			function (n) {
+				return n + keyStep;
+			},
+			notes);
+	});
+var $author$project$Main$generateFrequencies = F4(
+	function (key, octave, notes, tones) {
+		var notesInMode = (tones === 12) ? A2($author$project$Main$shiftByKey, key, notes) : A2(
+			$elm$core$List$range,
+			0,
+			$elm$core$Basics$round(tones));
+		return A2(
+			$elm$core$List$map,
+			A2($author$project$Main$generatePitch, octave, tones),
+			notesInMode);
+	});
+var $elm$core$List$drop = F2(
+	function (n, list) {
+		drop:
+		while (true) {
+			if (n <= 0) {
+				return list;
+			} else {
+				if (!list.b) {
+					return list;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs;
+					n = $temp$n;
+					list = $temp$list;
+					continue drop;
+				}
+			}
+		}
+	});
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm_community$list_extra$List$Extra$getAt = F2(
+	function (idx, xs) {
+		return (idx < 0) ? $elm$core$Maybe$Nothing : $elm$core$List$head(
+			A2($elm$core$List$drop, idx, xs));
+	});
+var $author$project$Main$getDefaultScale = function (scales) {
+	getDefaultScale:
+	while (true) {
+		if (scales.b) {
+			var x = scales.a;
+			return x;
+		} else {
+			var $temp$scales = $author$project$Main$default;
+			scales = $temp$scales;
+			continue getDefaultScale;
+		}
+	}
+};
+var $elm$core$String$cons = _String_cons;
+var $elm$core$String$fromChar = function (_char) {
+	return A2($elm$core$String$cons, _char, '');
+};
+var $author$project$Main$keyboardToString = function (k) {
+	if (k.$ === 'Character') {
+		var a = k.a;
+		return $elm$core$String$fromChar(a);
+	} else {
+		var a = k.a;
+		return a;
+	}
+};
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $author$project$Main$Mode = F2(
+	function (name, offset) {
+		return {name: name, offset: offset};
+	});
+var $author$project$Main$modes = _List_fromArray(
+	[
+		A2($author$project$Main$Mode, 'ionian', 0),
+		A2($author$project$Main$Mode, 'dorian', 2),
+		A2($author$project$Main$Mode, 'phrygian', 4),
+		A2($author$project$Main$Mode, 'lydian', 5),
+		A2($author$project$Main$Mode, 'mixolydian', 6),
+		A2($author$project$Main$Mode, 'aeolian', 8),
+		A2($author$project$Main$Mode, 'locrian', 10)
+	]);
+var $author$project$Main$getModeByName = function (name) {
+	var match = A2(
+		$elm$core$List$filter,
+		function (n) {
+			return _Utils_eq(n.name, name);
+		},
+		$author$project$Main$modes);
+	if (match.b) {
+		var head = match.a;
+		var rest = match.b;
+		return A2($author$project$Main$Mode, head.name, head.offset);
+	} else {
+		return A2($author$project$Main$Mode, 'ionian', 0);
+	}
+};
+var $author$project$Main$major = _List_fromArray(
+	[1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1]);
+var $elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
+	});
+var $elm$core$List$takeReverse = F3(
+	function (n, list, kept) {
+		takeReverse:
+		while (true) {
+			if (n <= 0) {
+				return kept;
+			} else {
+				if (!list.b) {
+					return kept;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs,
+						$temp$kept = A2($elm$core$List$cons, x, kept);
+					n = $temp$n;
+					list = $temp$list;
+					kept = $temp$kept;
+					continue takeReverse;
+				}
+			}
+		}
+	});
+var $elm$core$List$takeTailRec = F2(
+	function (n, list) {
+		return $elm$core$List$reverse(
+			A3($elm$core$List$takeReverse, n, list, _List_Nil));
+	});
+var $elm$core$List$takeFast = F3(
+	function (ctr, n, list) {
+		if (n <= 0) {
+			return _List_Nil;
+		} else {
+			var _v0 = _Utils_Tuple2(n, list);
+			_v0$1:
+			while (true) {
+				_v0$5:
+				while (true) {
+					if (!_v0.b.b) {
+						return list;
+					} else {
+						if (_v0.b.b.b) {
+							switch (_v0.a) {
+								case 1:
+									break _v0$1;
+								case 2:
+									var _v2 = _v0.b;
+									var x = _v2.a;
+									var _v3 = _v2.b;
+									var y = _v3.a;
+									return _List_fromArray(
+										[x, y]);
+								case 3:
+									if (_v0.b.b.b.b) {
+										var _v4 = _v0.b;
+										var x = _v4.a;
+										var _v5 = _v4.b;
+										var y = _v5.a;
+										var _v6 = _v5.b;
+										var z = _v6.a;
+										return _List_fromArray(
+											[x, y, z]);
+									} else {
+										break _v0$5;
+									}
+								default:
+									if (_v0.b.b.b.b && _v0.b.b.b.b.b) {
+										var _v7 = _v0.b;
+										var x = _v7.a;
+										var _v8 = _v7.b;
+										var y = _v8.a;
+										var _v9 = _v8.b;
+										var z = _v9.a;
+										var _v10 = _v9.b;
+										var w = _v10.a;
+										var tl = _v10.b;
+										return (ctr > 1000) ? A2(
+											$elm$core$List$cons,
+											x,
+											A2(
+												$elm$core$List$cons,
+												y,
+												A2(
+													$elm$core$List$cons,
+													z,
+													A2(
+														$elm$core$List$cons,
+														w,
+														A2($elm$core$List$takeTailRec, n - 4, tl))))) : A2(
+											$elm$core$List$cons,
+											x,
+											A2(
+												$elm$core$List$cons,
+												y,
+												A2(
+													$elm$core$List$cons,
+													z,
+													A2(
+														$elm$core$List$cons,
+														w,
+														A3($elm$core$List$takeFast, ctr + 1, n - 4, tl)))));
+									} else {
+										break _v0$5;
+									}
+							}
+						} else {
+							if (_v0.a === 1) {
+								break _v0$1;
+							} else {
+								break _v0$5;
+							}
+						}
+					}
+				}
+				return list;
+			}
+			var _v1 = _v0.b;
+			var x = _v1.a;
+			return _List_fromArray(
+				[x]);
+		}
+	});
+var $elm$core$List$take = F2(
+	function (n, list) {
+		return A3($elm$core$List$takeFast, 0, n, list);
+	});
+var $author$project$Main$rotate = F2(
+	function (n, list) {
+		return _Utils_ap(
+			A2($elm$core$List$drop, n, list),
+			A2($elm$core$List$take, n, list));
+	});
+var $elm$core$Tuple$second = function (_v0) {
+	var y = _v0.b;
+	return y;
+};
+var $author$project$Main$notesByMode = function (m) {
+	var mode = $author$project$Main$getModeByName(m);
+	var modeIntervals = A2($author$project$Main$rotate, mode.offset * 2, $author$project$Main$major);
+	var peek = function () {
+		if (modeIntervals.b) {
+			var x = modeIntervals.a;
+			var xs = modeIntervals.b;
+			return _List_fromArray(
+				[x]);
+		} else {
+			return _List_Nil;
+		}
+	}();
+	return A2(
+		$elm$core$List$map,
+		function (t) {
+			return t.a;
+		},
+		A2(
+			$elm$core$List$filter,
+			function (t) {
+				return t.b === 1;
+			},
+			A2(
+				$elm$core$List$indexedMap,
+				$elm$core$Tuple$pair,
+				A2($elm$core$List$append, modeIntervals, peek))));
+};
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Main$triggerNote = F3(
+	function (model, triggerFn, rawInput) {
+		var s = $author$project$Main$getDefaultScale(model.scales);
+		var keyStr = $author$project$Main$keyboardToString(rawInput);
+		var numberKeyPressed = A2($elm$core$String$all, $elm$core$Char$isDigit, keyStr);
+		var interval = $author$project$Main$notesByMode(s.mode);
+		var input = A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$String$toInt(keyStr));
+		var frequencies = A4($author$project$Main$generateFrequencies, s.key, s.octave, interval, s.tones);
+		return numberKeyPressed ? triggerFn(
+			A2(
+				$elm$core$Maybe$withDefault,
+				261.6,
+				A2($elm_community$list_extra$List$Extra$getAt, input - 1, frequencies))) : triggerFn(261.6);
+	});
 var $author$project$Main$triggerRelease = _Platform_outgoingPort('triggerRelease', $elm$json$Json$Encode$float);
 var $author$project$Main$updateScale = F3(
 	function (id, updater, scale) {
@@ -5783,12 +6147,12 @@ var $author$project$Main$update = F2(
 				var keycode = msg.a;
 				return _Utils_Tuple2(
 					model,
-					$author$project$Main$triggerAttack(261.6));
+					A3($author$project$Main$triggerNote, model, $author$project$Main$triggerAttack, keycode));
 			case 'KeyUp':
 				var keycode = msg.a;
 				return _Utils_Tuple2(
 					model,
-					$author$project$Main$triggerRelease(261.6));
+					A3($author$project$Main$triggerNote, model, $author$project$Main$triggerRelease, keycode));
 			case 'CreateScale':
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -5976,14 +6340,6 @@ var $rtfeldman$elm_css$Css$Structure$compactHelp = F2(
 var $rtfeldman$elm_css$Css$Structure$Keyframes = function (a) {
 	return {$: 'Keyframes', a: a};
 };
-var $elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
-		}
-	});
 var $rtfeldman$elm_css$Css$Structure$withKeyframeDeclarations = F2(
 	function (keyframesByName, compactedDeclarations) {
 		return A2(
@@ -6022,15 +6378,6 @@ var $elm$core$Maybe$map = F2(
 				f(value));
 		} else {
 			return $elm$core$Maybe$Nothing;
-		}
-	});
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
 		}
 	});
 var $rtfeldman$elm_css$Css$Structure$Output$charsetToString = function (charset) {
@@ -6721,7 +7068,6 @@ var $rtfeldman$elm_css$Css$Structure$concatMapLastStyleBlock = F2(
 			first,
 			A2($rtfeldman$elm_css$Css$Structure$concatMapLastStyleBlock, update, rest));
 	});
-var $elm$core$String$cons = _String_cons;
 var $Skinney$murmur3$Murmur3$HashData = F4(
 	function (shift, seed, hash, charsProcessed) {
 		return {charsProcessed: charsProcessed, hash: hash, seed: seed, shift: shift};
@@ -6880,15 +7226,6 @@ var $rtfeldman$elm_css$Hash$fromString = function (str) {
 		$rtfeldman$elm_hex$Hex$toString(
 			A2($Skinney$murmur3$Murmur3$hashString, $rtfeldman$elm_css$Hash$murmurSeed, str)));
 };
-var $elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(x);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
 var $rtfeldman$elm_css$Css$Preprocess$Resolve$last = function (list) {
 	last:
 	while (true) {
@@ -6993,132 +7330,6 @@ var $elm$core$List$tail = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
-var $elm$core$List$takeReverse = F3(
-	function (n, list, kept) {
-		takeReverse:
-		while (true) {
-			if (n <= 0) {
-				return kept;
-			} else {
-				if (!list.b) {
-					return kept;
-				} else {
-					var x = list.a;
-					var xs = list.b;
-					var $temp$n = n - 1,
-						$temp$list = xs,
-						$temp$kept = A2($elm$core$List$cons, x, kept);
-					n = $temp$n;
-					list = $temp$list;
-					kept = $temp$kept;
-					continue takeReverse;
-				}
-			}
-		}
-	});
-var $elm$core$List$takeTailRec = F2(
-	function (n, list) {
-		return $elm$core$List$reverse(
-			A3($elm$core$List$takeReverse, n, list, _List_Nil));
-	});
-var $elm$core$List$takeFast = F3(
-	function (ctr, n, list) {
-		if (n <= 0) {
-			return _List_Nil;
-		} else {
-			var _v0 = _Utils_Tuple2(n, list);
-			_v0$1:
-			while (true) {
-				_v0$5:
-				while (true) {
-					if (!_v0.b.b) {
-						return list;
-					} else {
-						if (_v0.b.b.b) {
-							switch (_v0.a) {
-								case 1:
-									break _v0$1;
-								case 2:
-									var _v2 = _v0.b;
-									var x = _v2.a;
-									var _v3 = _v2.b;
-									var y = _v3.a;
-									return _List_fromArray(
-										[x, y]);
-								case 3:
-									if (_v0.b.b.b.b) {
-										var _v4 = _v0.b;
-										var x = _v4.a;
-										var _v5 = _v4.b;
-										var y = _v5.a;
-										var _v6 = _v5.b;
-										var z = _v6.a;
-										return _List_fromArray(
-											[x, y, z]);
-									} else {
-										break _v0$5;
-									}
-								default:
-									if (_v0.b.b.b.b && _v0.b.b.b.b.b) {
-										var _v7 = _v0.b;
-										var x = _v7.a;
-										var _v8 = _v7.b;
-										var y = _v8.a;
-										var _v9 = _v8.b;
-										var z = _v9.a;
-										var _v10 = _v9.b;
-										var w = _v10.a;
-										var tl = _v10.b;
-										return (ctr > 1000) ? A2(
-											$elm$core$List$cons,
-											x,
-											A2(
-												$elm$core$List$cons,
-												y,
-												A2(
-													$elm$core$List$cons,
-													z,
-													A2(
-														$elm$core$List$cons,
-														w,
-														A2($elm$core$List$takeTailRec, n - 4, tl))))) : A2(
-											$elm$core$List$cons,
-											x,
-											A2(
-												$elm$core$List$cons,
-												y,
-												A2(
-													$elm$core$List$cons,
-													z,
-													A2(
-														$elm$core$List$cons,
-														w,
-														A3($elm$core$List$takeFast, ctr + 1, n - 4, tl)))));
-									} else {
-										break _v0$5;
-									}
-							}
-						} else {
-							if (_v0.a === 1) {
-								break _v0$1;
-							} else {
-								break _v0$5;
-							}
-						}
-					}
-				}
-				return list;
-			}
-			var _v1 = _v0.b;
-			var x = _v1.a;
-			return _List_fromArray(
-				[x]);
-		}
-	});
-var $elm$core$List$take = F2(
-	function (n, list) {
-		return A3($elm$core$List$takeFast, 0, n, list);
-	});
 var $rtfeldman$elm_css$Css$Preprocess$Resolve$toDocumentRule = F5(
 	function (str1, str2, str3, str4, declaration) {
 		if (declaration.$ === 'StyleBlockDeclaration') {
@@ -7789,22 +8000,6 @@ var $author$project$Main$modeOption = function (m) {
 				$rtfeldman$elm_css$Html$Styled$text(m.name)
 			]));
 };
-var $author$project$Main$Mode = F2(
-	function (name, offset) {
-		return {name: name, offset: offset};
-	});
-var $author$project$Main$modes = _List_fromArray(
-	[
-		A2($author$project$Main$Mode, 'ionian', 0),
-		A2($author$project$Main$Mode, 'dorian', 2),
-		A2($author$project$Main$Mode, 'phrygian', 4),
-		A2($author$project$Main$Mode, 'lydian', 5),
-		A2($author$project$Main$Mode, 'mixolydian', 6),
-		A2($author$project$Main$Mode, 'aeolian', 8),
-		A2($author$project$Main$Mode, 'locrian', 10)
-	]);
-var $author$project$Main$noteMap = _List_fromArray(
-	['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']);
 var $rtfeldman$elm_css$Html$Styled$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
 };
@@ -7893,10 +8088,6 @@ var $elm$core$Basics$composeR = F3(
 		return g(
 			f(x));
 	});
-var $elm$core$String$fromChar = function (_char) {
-	return A2($elm$core$String$cons, _char, '');
-};
-var $elm$core$Basics$pow = _Basics_pow;
 var $rtfeldman$elm_hex$Hex$fromStringHelp = F3(
 	function (position, chars, accumulated) {
 		fromStringHelp:
@@ -8263,7 +8454,6 @@ var $rtfeldman$elm_css$Html$Styled$Events$onMouseUp = function (msg) {
 		'mouseup',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $elm$core$Basics$round = _Basics_round;
 var $rtfeldman$elm_css$Css$Preprocess$ApplyStyles = function (a) {
 	return {$: 'ApplyStyles', a: a};
 };
@@ -8366,152 +8556,6 @@ var $author$project$Main$createKey = function (n) {
 				$elm$core$String$fromInt(
 					$elm$core$Basics$round(n)))
 			]));
-};
-var $author$project$Main$base = 16.35;
-var $author$project$Main$temperament = 1;
-var $author$project$Main$generatePitch = F2(
-	function (octave, tones) {
-		return function (steps) {
-			return $author$project$Main$base * A2($elm$core$Basics$pow, 2, octave + ((steps * $author$project$Main$temperament) / tones));
-		};
-	});
-var $elm_community$list_extra$List$Extra$findIndexHelp = F3(
-	function (index, predicate, list) {
-		findIndexHelp:
-		while (true) {
-			if (!list.b) {
-				return $elm$core$Maybe$Nothing;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (predicate(x)) {
-					return $elm$core$Maybe$Just(index);
-				} else {
-					var $temp$index = index + 1,
-						$temp$predicate = predicate,
-						$temp$list = xs;
-					index = $temp$index;
-					predicate = $temp$predicate;
-					list = $temp$list;
-					continue findIndexHelp;
-				}
-			}
-		}
-	});
-var $elm_community$list_extra$List$Extra$findIndex = $elm_community$list_extra$List$Extra$findIndexHelp(0);
-var $elm_community$list_extra$List$Extra$elemIndex = function (x) {
-	return $elm_community$list_extra$List$Extra$findIndex(
-		$elm$core$Basics$eq(x));
-};
-var $author$project$Main$convertKeyToIndex = function (t) {
-	var result = A2($elm_community$list_extra$List$Extra$elemIndex, t, $author$project$Main$noteMap);
-	if (result.$ === 'Just') {
-		var y = result.a;
-		return y;
-	} else {
-		return 0;
-	}
-};
-var $author$project$Main$shiftByKey = F2(
-	function (key, notes) {
-		var keyStep = $author$project$Main$convertKeyToIndex(key);
-		return A2(
-			$elm$core$List$map,
-			function (n) {
-				return n + keyStep;
-			},
-			notes);
-	});
-var $author$project$Main$generateFrequencies = F4(
-	function (key, octave, notes, tones) {
-		var notesInMode = (tones === 12) ? A2($author$project$Main$shiftByKey, key, notes) : A2(
-			$elm$core$List$range,
-			0,
-			$elm$core$Basics$round(tones));
-		return A2(
-			$elm$core$List$map,
-			A2($author$project$Main$generatePitch, octave, tones),
-			notesInMode);
-	});
-var $author$project$Main$getModeByName = function (name) {
-	var match = A2(
-		$elm$core$List$filter,
-		function (n) {
-			return _Utils_eq(n.name, name);
-		},
-		$author$project$Main$modes);
-	if (match.b) {
-		var head = match.a;
-		var rest = match.b;
-		return A2($author$project$Main$Mode, head.name, head.offset);
-	} else {
-		return A2($author$project$Main$Mode, 'ionian', 0);
-	}
-};
-var $author$project$Main$major = _List_fromArray(
-	[1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1]);
-var $elm$core$Tuple$pair = F2(
-	function (a, b) {
-		return _Utils_Tuple2(a, b);
-	});
-var $elm$core$List$drop = F2(
-	function (n, list) {
-		drop:
-		while (true) {
-			if (n <= 0) {
-				return list;
-			} else {
-				if (!list.b) {
-					return list;
-				} else {
-					var x = list.a;
-					var xs = list.b;
-					var $temp$n = n - 1,
-						$temp$list = xs;
-					n = $temp$n;
-					list = $temp$list;
-					continue drop;
-				}
-			}
-		}
-	});
-var $author$project$Main$rotate = F2(
-	function (n, list) {
-		return _Utils_ap(
-			A2($elm$core$List$drop, n, list),
-			A2($elm$core$List$take, n, list));
-	});
-var $elm$core$Tuple$second = function (_v0) {
-	var y = _v0.b;
-	return y;
-};
-var $author$project$Main$notesByMode = function (m) {
-	var mode = $author$project$Main$getModeByName(m);
-	var modeIntervals = A2($author$project$Main$rotate, mode.offset * 2, $author$project$Main$major);
-	var peek = function () {
-		if (modeIntervals.b) {
-			var x = modeIntervals.a;
-			var xs = modeIntervals.b;
-			return _List_fromArray(
-				[x]);
-		} else {
-			return _List_Nil;
-		}
-	}();
-	return A2(
-		$elm$core$List$map,
-		function (t) {
-			return t.a;
-		},
-		A2(
-			$elm$core$List$filter,
-			function (t) {
-				return t.b === 1;
-			},
-			A2(
-				$elm$core$List$indexedMap,
-				$elm$core$Tuple$pair,
-				A2($elm$core$List$append, modeIntervals, peek))));
 };
 var $author$project$Main$showKeys = F4(
 	function (key, mode, octave, tones) {
