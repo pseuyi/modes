@@ -163,10 +163,10 @@ update msg model =
             ( { model | scales = updateScales id (\scale -> { scale | tones = tones }) model.scales }, Cmd.none )
 
         KeyDown keycode ->
-            ( model, triggerNote model keycode )
+            ( model, triggerNote model triggerAttack keycode )
 
         KeyUp keycode ->
-            ( model, triggerRelease 261.6 )
+            ( model, triggerNote model triggerRelease keycode )
 
         CreateScale ->
             ( { model | scales = model.scales ++ List.map (incrementId model.scales) default }, Cmd.none )
@@ -252,8 +252,8 @@ keyboardToString k =
             a
 
 
-triggerNote : Model -> Keyboard -> Cmd Msg
-triggerNote model rawInput =
+triggerNote : Model -> (Float -> Cmd Msg) -> Keyboard -> Cmd Msg
+triggerNote model triggerFn rawInput =
     let
         keyStr =
             keyboardToString rawInput
@@ -274,10 +274,10 @@ triggerNote model rawInput =
             all isDigit <| keyStr
     in
     if numberKeyPressed then
-        triggerAttack <| Maybe.withDefault 261.6 <| getAt (input - 1) frequencies
+        triggerFn <| Maybe.withDefault 261.6 <| getAt (input - 1) frequencies
 
     else
-        triggerAttack 261.6
+        triggerFn 261.6
 
 
 createKey : Float -> Html Msg
