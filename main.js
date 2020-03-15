@@ -5144,8 +5144,11 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		{scales: $author$project$Main$default},
+		{connectedDevice: '', scales: $author$project$Main$default},
 		$elm$core$Platform$Cmd$none);
+};
+var $author$project$Main$ConnectDevice = function (a) {
+	return {$: 'ConnectDevice', a: a};
 };
 var $author$project$Main$KeyDown = function (a) {
 	return {$: 'KeyDown', a: a};
@@ -5153,9 +5156,16 @@ var $author$project$Main$KeyDown = function (a) {
 var $author$project$Main$KeyUp = function (a) {
 	return {$: 'KeyUp', a: a};
 };
+var $author$project$Main$ReceiveMIDINoteOff = function (a) {
+	return {$: 'ReceiveMIDINoteOff', a: a};
+};
+var $author$project$Main$ReceiveMIDINoteOn = function (a) {
+	return {$: 'ReceiveMIDINoteOn', a: a};
+};
 var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$Main$connectMIDI = _Platform_incomingPort('connectMIDI', $elm$json$Json$Decode$string);
+var $elm$json$Json$Decode$field = _Json_decodeField;
 var $author$project$Main$Character = function (a) {
 	return {$: 'Character', a: a};
 };
@@ -5578,6 +5588,9 @@ var $elm$browser$Browser$Events$on = F3(
 	});
 var $elm$browser$Browser$Events$onKeyDown = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'keydown');
 var $elm$browser$Browser$Events$onKeyUp = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'keyup');
+var $elm$json$Json$Decode$float = _Json_decodeFloat;
+var $author$project$Main$receiveMIDINoteOff = _Platform_incomingPort('receiveMIDINoteOff', $elm$json$Json$Decode$float);
+var $author$project$Main$receiveMIDINoteOn = _Platform_incomingPort('receiveMIDINoteOn', $elm$json$Json$Decode$float);
 var $author$project$Main$subscriptions = function (model) {
 	return $elm$core$Platform$Sub$batch(
 		_List_fromArray(
@@ -5585,7 +5598,19 @@ var $author$project$Main$subscriptions = function (model) {
 				$elm$browser$Browser$Events$onKeyDown(
 				A2($elm$json$Json$Decode$map, $author$project$Main$KeyDown, $author$project$Main$keyDecoder)),
 				$elm$browser$Browser$Events$onKeyUp(
-				A2($elm$json$Json$Decode$map, $author$project$Main$KeyUp, $author$project$Main$keyDecoder))
+				A2($elm$json$Json$Decode$map, $author$project$Main$KeyUp, $author$project$Main$keyDecoder)),
+				$author$project$Main$connectMIDI(
+				function (n) {
+					return $author$project$Main$ConnectDevice(n);
+				}),
+				$author$project$Main$receiveMIDINoteOn(
+				function (n) {
+					return $author$project$Main$ReceiveMIDINoteOn(n);
+				}),
+				$author$project$Main$receiveMIDINoteOff(
+				function (n) {
+					return $author$project$Main$ReceiveMIDINoteOff(n);
+				})
 			]));
 };
 var $author$project$Main$changeKey = function (key) {
@@ -5736,8 +5761,9 @@ var $author$project$Main$update = F2(
 								model.scales)
 						}),
 					$elm$core$Platform$Cmd$none);
-			case 'IncrementTone':
+			case 'ChangeTones':
 				var id = msg.a;
+				var tones = msg.b;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
@@ -5748,14 +5774,11 @@ var $author$project$Main$update = F2(
 								function (scale) {
 									return _Utils_update(
 										scale,
-										{tones: 19});
+										{tones: tones});
 								},
 								model.scales)
 						}),
 					$elm$core$Platform$Cmd$none);
-			case 'DecrementTone':
-				var id = msg.a;
-				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 			case 'KeyDown':
 				var keycode = msg.a;
 				return _Utils_Tuple2(
@@ -5779,7 +5802,7 @@ var $author$project$Main$update = F2(
 									$author$project$Main$default))
 						}),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'DeleteScale':
 				var id = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -5791,6 +5814,23 @@ var $author$project$Main$update = F2(
 								model.scales)
 						}),
 					$elm$core$Platform$Cmd$none);
+			case 'ConnectDevice':
+				var name = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{connectedDevice: name}),
+					$elm$core$Platform$Cmd$none);
+			case 'ReceiveMIDINoteOn':
+				var note = msg.a;
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$triggerAttack(note));
+			default:
+				var note = msg.a;
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$triggerRelease(note));
 		}
 	});
 var $author$project$Main$CreateScale = {$: 'CreateScale'};
@@ -7667,13 +7707,27 @@ var $author$project$Main$DeleteScale = function (a) {
 var $author$project$Main$IncrementOctave = function (a) {
 	return {$: 'IncrementOctave', a: a};
 };
-var $author$project$Main$IncrementTone = function (a) {
-	return {$: 'IncrementTone', a: a};
+var $author$project$Main$ChangeTones = F2(
+	function (a, b) {
+		return {$: 'ChangeTones', a: a, b: b};
+	});
+var $elm$core$String$toFloat = _String_toFloat;
+var $author$project$Main$changeTones = function (id) {
+	return function (tones) {
+		return A2(
+			$author$project$Main$ChangeTones,
+			id,
+			A2(
+				$elm$core$Maybe$withDefault,
+				12,
+				$elm$core$String$toFloat(tones)));
+	};
 };
 var $author$project$Main$createOptions = F2(
 	function (ls, createOption) {
 		return A2($elm$core$List$map, createOption, ls);
 	});
+var $rtfeldman$elm_css$Html$Styled$input = $rtfeldman$elm_css$Html$Styled$node('input');
 var $rtfeldman$elm_css$Html$Styled$option = $rtfeldman$elm_css$Html$Styled$node('option');
 var $rtfeldman$elm_css$VirtualDom$Styled$Unstyled = function (a) {
 	return {$: 'Unstyled', a: a};
@@ -7782,6 +7836,7 @@ var $rtfeldman$elm_css$Html$Styled$Events$onInput = function (tagger) {
 			$rtfeldman$elm_css$Html$Styled$Events$alwaysStop,
 			A2($elm$json$Json$Decode$map, tagger, $rtfeldman$elm_css$Html$Styled$Events$targetValue)));
 };
+var $rtfeldman$elm_css$Html$Styled$Attributes$placeholder = $rtfeldman$elm_css$Html$Styled$Attributes$stringProperty('placeholder');
 var $rtfeldman$elm_css$Html$Styled$select = $rtfeldman$elm_css$Html$Styled$node('select');
 var $author$project$Main$ChangeKey = F2(
 	function (a, b) {
@@ -7813,7 +7868,6 @@ var $rtfeldman$elm_css$Css$backgroundColor = function (c) {
 var $rtfeldman$elm_css$Css$color = function (c) {
 	return A2($rtfeldman$elm_css$Css$property, 'color', c.value);
 };
-var $rtfeldman$elm_css$Css$height = $rtfeldman$elm_css$Css$prop1('height');
 var $rtfeldman$elm_css$Css$withPrecedingHash = function (str) {
 	return A2($elm$core$String$startsWith, '#', str) ? str : A2(
 		$elm$core$String$cons,
@@ -8282,7 +8336,6 @@ var $rtfeldman$elm_css$Css$textAlign = function (fn) {
 		'text-align',
 		fn($rtfeldman$elm_css$Css$Internal$lengthForOverloadedProperty));
 };
-var $rtfeldman$elm_css$Css$width = $rtfeldman$elm_css$Css$prop1('width');
 var $author$project$Main$createKey = function (n) {
 	return A2(
 		$rtfeldman$elm_css$Html$Styled$li,
@@ -8291,19 +8344,16 @@ var $author$project$Main$createKey = function (n) {
 				$rtfeldman$elm_css$Html$Styled$Attributes$css(
 				_List_fromArray(
 					[
-						$rtfeldman$elm_css$Css$width(
-						$rtfeldman$elm_css$Css$px(40)),
-						$rtfeldman$elm_css$Css$height(
-						$rtfeldman$elm_css$Css$px(40)),
 						$rtfeldman$elm_css$Css$backgroundColor(
 						$rtfeldman$elm_css$Css$hex('A9A9A9')),
 						$rtfeldman$elm_css$Css$textAlign($rtfeldman$elm_css$Css$center),
 						$rtfeldman$elm_css$Css$padding(
-						$rtfeldman$elm_css$Css$rem(1)),
+						$rtfeldman$elm_css$Css$rem(0.5)),
 						$rtfeldman$elm_css$Css$color(
 						$rtfeldman$elm_css$Css$hex('FFF')),
 						$rtfeldman$elm_css$Css$margin(
-						$rtfeldman$elm_css$Css$px(2))
+						$rtfeldman$elm_css$Css$px(2)),
+						A2($rtfeldman$elm_css$Css$property, 'flex-grow', '1')
 					])),
 				$rtfeldman$elm_css$Html$Styled$Events$onMouseDown(
 				$author$project$Main$TriggerAttack(n)),
@@ -8324,27 +8374,6 @@ var $author$project$Main$generatePitch = F2(
 		return function (steps) {
 			return $author$project$Main$base * A2($elm$core$Basics$pow, 2, octave + ((steps * $author$project$Main$temperament) / tones));
 		};
-	});
-var $elm$core$List$repeatHelp = F3(
-	function (result, n, value) {
-		repeatHelp:
-		while (true) {
-			if (n <= 0) {
-				return result;
-			} else {
-				var $temp$result = A2($elm$core$List$cons, value, result),
-					$temp$n = n - 1,
-					$temp$value = value;
-				result = $temp$result;
-				n = $temp$n;
-				value = $temp$value;
-				continue repeatHelp;
-			}
-		}
-	});
-var $elm$core$List$repeat = F2(
-	function (n, value) {
-		return A3($elm$core$List$repeatHelp, _List_Nil, n, value);
 	});
 var $elm_community$list_extra$List$Extra$findIndexHelp = F3(
 	function (index, predicate, list) {
@@ -8396,9 +8425,9 @@ var $author$project$Main$shiftByKey = F2(
 var $author$project$Main$generateFrequencies = F4(
 	function (key, octave, notes, tones) {
 		var notesInMode = (tones === 12) ? A2($author$project$Main$shiftByKey, key, notes) : A2(
-			$elm$core$List$repeat,
-			$elm$core$Basics$round(tones),
-			1);
+			$elm$core$List$range,
+			0,
+			$elm$core$Basics$round(tones));
 		return A2(
 			$elm$core$List$map,
 			A2($author$project$Main$generatePitch, octave, tones),
@@ -8564,16 +8593,14 @@ var $author$project$Main$createScale = function (scale) {
 				A2($author$project$Main$createOptions, $author$project$Main$noteMap, $author$project$Main$keyOption)),
 				$rtfeldman$elm_css$Html$Styled$text(scale.key + ' scale'),
 				A2(
-				$rtfeldman$elm_css$Html$Styled$button,
+				$rtfeldman$elm_css$Html$Styled$input,
 				_List_fromArray(
 					[
-						$rtfeldman$elm_css$Html$Styled$Events$onClick(
-						$author$project$Main$IncrementTone(scale.id))
+						$rtfeldman$elm_css$Html$Styled$Events$onInput(
+						$author$project$Main$changeTones(scale.id)),
+						$rtfeldman$elm_css$Html$Styled$Attributes$placeholder('# of tones')
 					]),
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$text('19-tone')
-					])),
+				_List_Nil),
 				A2(
 				$rtfeldman$elm_css$Html$Styled$button,
 				_List_fromArray(
@@ -9071,6 +9098,7 @@ var $rtfeldman$elm_css$VirtualDom$Styled$toUnstyled = function (vdom) {
 	}
 };
 var $rtfeldman$elm_css$Html$Styled$toUnstyled = $rtfeldman$elm_css$VirtualDom$Styled$toUnstyled;
+var $rtfeldman$elm_css$Css$width = $rtfeldman$elm_css$Css$prop1('width');
 var $author$project$Main$view = function (model) {
 	return $rtfeldman$elm_css$Html$Styled$toUnstyled(
 		A2(
@@ -9095,6 +9123,14 @@ var $author$project$Main$view = function (model) {
 				]),
 			_List_fromArray(
 				[
+					A2(
+					$rtfeldman$elm_css$Html$Styled$div,
+					_List_Nil,
+					_List_fromArray(
+						[
+							$rtfeldman$elm_css$Html$Styled$text(
+							(model.connectedDevice !== '') ? ('currently connect to: ' + model.connectedDevice) : '')
+						])),
 					A2(
 					$rtfeldman$elm_css$Html$Styled$ul,
 					_List_fromArray(
